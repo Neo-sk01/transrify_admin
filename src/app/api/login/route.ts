@@ -1,44 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db, seedOnce } from '@/lib/store';
-import { randId } from '@/lib/crypto';
-import { append } from '@/lib/ledger';
+import { transrifyApi, TransrifyApiError } from '@/lib/transrify-api';
 
-
-const Body = z.object({ nationalId: z.string().min(6), pin: z.string().min(4).max(12) });
-
+const Body = z.object({ 
+  tenantKey: z.string().optional().default('DEMO_BANK_KEY'),
+  customerRef: z.string().min(1), 
+  pin: z.string().min(4).max(12),
+  deviceInfo: z.object({
+    device: z.string().optional().default('demo-device')
+  }).optional().default({ device: 'demo-device' }),
+  geo: z.object({
+    lat: z.number(),
+    lng: z.number()
+  }).optional().default({ lat: 37.7749, lng: -122.4194 })
+});
 
 export async function POST(req: NextRequest) {
-await seedOnce();
-const body = await req.json();
-const { nationalId, pin } = Body.parse(body);
-const user = await db.findUserByNationalId(nationalId);
-if (!user) return NextResponse.json({ ok: false, error: 'USER_NOT_FOUND' }, { status: 404 });
+  try {
+    const body = await req.json();
+    console.log('🔄 Demo login request received:', { customerRef: body.customerRef, pin: '***' });
+    
+    const loginData = Body.parse(body);
+    
+    console.log('🌐 Calling Transrify API login with:', {
+      tenantKey: loginData.tenantKey,
+      customerRef: loginData.customerRef,
+      deviceInfo: loginData.deviceInfo,
+      geo: loginData.geo
+    });
 
+    // Call the actual Transrify API
+    const result = await transrifyApi.login(loginData);
+    
+    console.log('✅ Transrify API login response:', {
+      verdict: result.verdict,
+      recommendedAction: result.recommendedAction,
+      sessionId: result.sessionId
+    });
 
-const isNormal = await (await import('argon2')).default.verify(user.pinHash, pin + (process.env.PEPPER_SECRET || 'dev_pepper'));
-const isDuress = !isNormal && await (await import('argon2')).default.verify(user.duressPinHash, pin + (process.env.PEPPER_SECRET || 'dev_pepper'));
+    return NextResponse.json({
+      ok: true,
+      sessionId: result.sessionId,
+      verdict: result.verdict,
+      recommendedAction: result.recommendedAction,
+      status: result.verdict.toLowerCase() // For backward compatibility
+    });
 
+  } catch (error) {
+    console.error('❌ Demo login failed:', error);
+    
+    if (error instanceof TransrifyApiError) {
+      return NextResponse.json({
+        ok: false,
+        error: error.message,
+        status: error.status
+      }, { status: error.status || 500 });
+    }
 
-if (!isNormal && !isDuress) {
-return NextResponse.json({ ok: false, error: 'INVALID_PIN' }, { status: 401 });
-}
-
-
-const sessionId = randId('sess');
-const status = isDuress ? 'duress' : 'active' as const;
-
-
-db.addSession({ id: sessionId, userId: user.id, createdAt: Date.now(), status });
-
-
-if (isDuress) {
-db.addIncident({ id: randId('inc'), sessionId, userId: user.id, kind: 'DURESS', createdAt: Date.now(), note: 'Duress PIN used' });
-append('LOGIN_DURESS', { sessionId, userId: user.id, data: { nationalId: 'redacted' } });
-} else {
-append('LOGIN_OK', { sessionId, userId: user.id, data: { nationalId: 'redacted' } });
-}
-
-
-return NextResponse.json({ ok: true, sessionId, status });
+    return NextResponse.json({
+      ok: false,
+      error: 'Login failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  }
 }
