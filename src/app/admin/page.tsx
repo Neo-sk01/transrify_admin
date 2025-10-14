@@ -18,7 +18,12 @@ return (
 <main className="p-6 space-y-4">
 <h1 className="text-2xl font-bold">TRANSRIFY • Admin</h1>
 <p className="text-sm text-gray-500">Real‑time view of sessions, incidents, and append‑only ledger (via polling).</p>
-<AdminTable sessions={data.sessions} incidents={data.incidents} ledger={data.ledger} />
+<AdminTable 
+  sessions={data.sessions} 
+  incidents={data.incidents} 
+  eventLogs={data.eventLogs}
+  ledger={data.ledger} 
+/>
 </main>
 );
 }

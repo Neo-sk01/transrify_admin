@@ -1,4 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Transrify Admin Dashboard
+
+A Next.js admin dashboard for monitoring Transrify duress PIN authentication system. This dashboard provides real-time monitoring of sessions, incidents, and event logs from the Transrify API.
+
+## Features
+
+- **Real-time Session Monitoring** - View all authentication sessions with results (NORMAL, DURESS, FAIL)
+- **Incident Tracking** - Monitor security incidents with GPS coordinates and status
+- **Event Log Viewer** - Comprehensive event logging with tenant isolation
+- **Auto-refresh Dashboard** - Live updates every 2 seconds
+- **Responsive Design** - Works on desktop and mobile devices
+
+## Configuration
+
+1. Copy the example environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+1. Update the Transrify API configuration in `.env.local`:
+
+```bash
+TRANSRIFY_API_BASE_URL=http://localhost:3001  # Your Transrify API server URL
+ADMIN_ACCESS_TOKEN=your_secure_admin_token    # Admin authentication token
+```
 
 ## Getting Started
 
@@ -34,4 +59,17 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# transrify_admin
+
+## API Integration
+
+The admin dashboard integrates with the Transrify API endpoints:
+
+- `GET /v1/admin/state` - Fetches sessions, incidents, and event logs
+- `GET /v1/sessions/verify/{sessionId}` - Verifies session status
+- `POST /v1/sessions/login` - Authentication endpoint (for testing)
+- `POST /v1/evidence/finalize` - Evidence management
+
+## Access
+
+- **Admin Dashboard**: `/admin` - Real-time monitoring interface
+- **Demo Page**: `/demo` - Test authentication flows
