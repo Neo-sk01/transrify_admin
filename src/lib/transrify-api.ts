@@ -15,7 +15,13 @@ export class TransrifyApiClient {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || process.env.TRANSRIFY_API_BASE_URL || 'http://localhost:3001';
+    // Get base URL from env, default to production API if not set
+    const envBaseUrl = process.env.TRANSRIFY_API_BASE_URL || 'https://carboapi.me/v1';
+    // If baseUrl is provided, use it; otherwise use env variable
+    this.baseUrl = baseUrl || envBaseUrl;
+    // Remove trailing /v1 if present (we'll add it per endpoint)
+    this.baseUrl = this.baseUrl.replace(/\/v1\/?$/, '');
+    console.log('🔧 TransrifyApiClient initialized with baseUrl:', this.baseUrl);
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
