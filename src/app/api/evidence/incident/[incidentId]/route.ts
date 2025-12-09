@@ -116,8 +116,15 @@ export async function GET(
     const apiUrl = `${baseUrl}/v1/evidence/incident/${incidentId}?expiresIn=${expiresIn}`;
     console.log('🌐 Trying Transrify API:', apiUrl);
     
+    // Get auth token from environment
+    const authToken = process.env.ADMIN_SERVICE_TOKEN || process.env.ADMIN_ACCESS_TOKEN;
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
     const apiResponse = await fetch(apiUrl, {
-      headers: { 'Accept': 'application/json' },
+      headers,
     });
 
     if (apiResponse.ok) {

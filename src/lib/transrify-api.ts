@@ -13,15 +13,23 @@ export class TransrifyApiError extends Error {
 
 export class TransrifyApiClient {
   private baseUrl: string;
+  private authToken: string | undefined;
 
-  constructor(baseUrl?: string) {
+  constructor(baseUrl?: string, authToken?: string) {
     // Get base URL from env, default to production API if not set
     const envBaseUrl = process.env.TRANSRIFY_API_BASE_URL || 'https://carboapi.me/v1';
     // If baseUrl is provided, use it; otherwise use env variable
     this.baseUrl = baseUrl || envBaseUrl;
     // Remove trailing /v1 if present (we'll add it per endpoint)
     this.baseUrl = this.baseUrl.replace(/\/v1\/?$/, '');
-    console.log('🔧 TransrifyApiClient initialized with baseUrl:', this.baseUrl);
+    
+    // Get auth token from parameter, env variable, or undefined
+    this.authToken = authToken || process.env.ADMIN_SERVICE_TOKEN || process.env.ADMIN_ACCESS_TOKEN;
+    
+    console.log('🔧 TransrifyApiClient initialized:', {
+      baseUrl: this.baseUrl,
+      hasAuthToken: !!this.authToken
+    });
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -35,12 +43,20 @@ export class TransrifyApiClient {
     });
     
     try {
+      // Build headers with auth token if available
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...options.headers as Record<string, string>,
+      };
+      
+      // Add Authorization header if token is available
+      if (this.authToken) {
+        headers['Authorization'] = `Bearer ${this.authToken}`;
+      }
+      
       const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
         ...options,
+        headers,
       });
 
       console.log('📡 API Response received:', {

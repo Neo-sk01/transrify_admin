@@ -21,13 +21,16 @@ cp .env.example .env
 2. Update the Transrify API configuration in `.env`:
 
 ```bash
-TRANSRIFY_API_BASE_URL=http://localhost:3001  # Your Transrify API server URL
-ADMIN_ACCESS_TOKEN=your_secure_admin_token    # Admin authentication token
-S3_BUCKET=transrify2                          # S3 bucket name for evidence
-S3_ACCESS_KEY=your_s3_access_key              # AWS S3 access key
-S3_SECRET_KEY=your_s3_secret_key              # AWS S3 secret key
-S3_REGION=us-east-1                           # AWS S3 region
+TRANSRIFY_API_BASE_URL=https://carboapi.me/v1  # Your Transrify API server URL
+ADMIN_SERVICE_TOKEN=your_secure_admin_token    # Admin authentication token (Bearer token for API)
+ADMIN_ACCESS_TOKEN=your_secure_admin_token    # Admin access token (for Next.js API routes)
+S3_BUCKET=transrify2                          # S3 bucket name for evidence (optional)
+S3_ACCESS_KEY=your_s3_access_key              # AWS S3 access key (optional)
+S3_SECRET_KEY=your_s3_secret_key              # AWS S3 secret key (optional)
+S3_REGION=us-east-1                           # AWS S3 region (optional)
 ```
+
+**Note:** `ADMIN_SERVICE_TOKEN` is used to authenticate with the Transrify API. `ADMIN_ACCESS_TOKEN` is used to protect the Next.js API routes. They can be the same value or different depending on your setup.
 
 **Note:** The dashboard reads from `.env` file. If you have a `.env.local` file, it will take precedence over `.env`. To use `.env` exclusively, ensure `.env.local` doesn't exist or remove it.
 
