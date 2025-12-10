@@ -8,13 +8,9 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const { sessionId } = Q.parse({ sessionId: searchParams.get('sessionId') });
-    
-    console.log('🔄 Demo verify request for session:', sessionId);
 
     // Call the actual Transrify API
     const result = await transrifyApi.verifySession(sessionId);
-    
-    console.log('✅ Transrify API verify response:', result);
 
     return NextResponse.json({
       ok: true,
@@ -24,7 +20,7 @@ export async function GET(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Demo verify failed:', error);
+    console.error('Demo verify failed:', error);
     
     if (error instanceof TransrifyApiError) {
       return NextResponse.json({

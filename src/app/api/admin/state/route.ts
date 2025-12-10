@@ -9,16 +9,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    console.log('🔄 Attempting to fetch data from Transrify API...');
-    console.log('🌐 API Base URL:', process.env.TRANSRIFY_API_BASE_URL);
-    
     // Fetch data from Transrify API
     const transrifyData = await transrifyApi.getAdminState();
-    
-    console.log('✅ Successfully received data from Transrify API');
-    console.log('📊 Sessions count:', transrifyData.sessions?.length || 0);
-    console.log('🚨 Incidents count:', transrifyData.incidents?.length || 0);
-    console.log('📝 Event logs count:', transrifyData.eventLogs?.length || 0);
     
     // Keep local ledger for now (can be removed if not needed)
     const ledger = readAll();
@@ -32,19 +24,12 @@ export async function GET(req: NextRequest) {
       ledger: last // Legacy ledger data
     });
   } catch (error) {
-    console.error('❌ Failed to fetch Transrify admin state:', error);
-    console.log('🔍 Error details:', {
-      name: error instanceof Error ? error.name : 'Unknown',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace'
+    console.error('Failed to fetch Transrify admin state:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      status: error instanceof TransrifyApiError ? error.status : undefined
     });
     
     if (error instanceof TransrifyApiError) {
-      console.log('🚫 TransrifyApiError details:', {
-        status: error.status,
-        response: error.response
-      });
-      
       return NextResponse.json({ 
         ok: false, 
         error: `Transrify API Error: ${error.message}`,

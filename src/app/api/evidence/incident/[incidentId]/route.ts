@@ -1,9 +1,8 @@
 /**
- * Evidence endpoint - uses Transrify API or direct S3 access
+ * Evidence endpoint - uses direct S3 access
  * GET /api/evidence/incident/:incidentId
  * 
- * First tries the Transrify API endpoint, falls back to direct S3 access
- * if API is unavailable or credentials are provided.
+ * Always uses direct S3 access to fetch evidence files.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -109,55 +108,13 @@ export async function GET(
     );
   }
 
-  // Try Transrify API first (it has proper metadata and verification status)
-  try {
-    // Remove trailing /v1 if present, then add it back to avoid double /v1/v1
-    const baseUrl = TRANSRIFY_API_BASE.replace(/\/v1\/?$/, '');
-    const apiUrl = `${baseUrl}/v1/evidence/incident/${incidentId}?expiresIn=${expiresIn}`;
-    console.log('🌐 Trying Transrify API:', apiUrl);
-    
-    // Get auth token from environment
-    const authToken = process.env.ADMIN_SERVICE_TOKEN || process.env.ADMIN_ACCESS_TOKEN;
-    const headers: Record<string, string> = { 'Accept': 'application/json' };
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    const apiResponse = await fetch(apiUrl, {
-      headers,
-    });
-
-    if (apiResponse.ok) {
-      const data = await apiResponse.json();
-      console.log('✅ Transrify API response successful, returning data');
-      return NextResponse.json(data);
-    }
-    
-    console.log('⚠️ Transrify API returned:', apiResponse.status);
-    // If 404, we'll fall through to S3 direct access
-    if (apiResponse.status !== 404) {
-      const errorData = await apiResponse.json().catch(() => ({}));
-      return NextResponse.json(
-        {
-          ok: false,
-          error: errorData.error || 'API_ERROR',
-          message: errorData.message,
-        },
-        { status: apiResponse.status }
-      );
-    }
-  } catch (apiError) {
-    console.log('⚠️ Transrify API error, falling back to S3:', apiError);
-    // Fall through to S3 direct access
-  }
-
-  // Fallback to direct S3 access (if credentials are available)
+  // Always use direct S3 access
   if (!USE_DIRECT_S3) {
     return NextResponse.json(
       {
         ok: false,
         error: 'EVIDENCE_UNAVAILABLE',
-        message: 'Transrify API unavailable and S3 credentials not configured',
+        message: 'S3 credentials not configured',
       },
       { status: 503 }
     );
@@ -166,7 +123,6 @@ export async function GET(
   try {
     // List objects in the incident folder
     const prefix = `incidents/${incidentId}/`;
-    console.log('🔍 Listing S3 objects directly:', { bucket: S3_BUCKET, prefix, region: S3_REGION });
     
     // Collect all objects (handle pagination)
     const allObjects: Array<{ Key?: string; Size?: number; LastModified?: Date }> = [];
@@ -190,13 +146,7 @@ export async function GET(
       continuationToken = response.NextContinuationToken;
     }
 
-    console.log('📦 S3 response:', {
-      totalObjects: allObjects.length,
-      keys: allObjects.map(c => c.Key).slice(0, 10), // First 10 keys for debugging
-    });
-
     if (allObjects.length === 0) {
-      console.log('⚠️ No objects found in S3 for prefix:', prefix);
       return NextResponse.json(
         {
           ok: false,
@@ -210,13 +160,11 @@ export async function GET(
     // Filter and process evidence files
     const evidencePromises = allObjects.map(async (object) => {
       if (!object.Key) {
-        console.log('⚠️ Object has no Key:', object);
         return null;
       }
 
       // Skip if it's a folder (ends with /)
       if (object.Key.endsWith('/')) {
-        console.log('📁 Skipping folder:', object.Key);
         return null;
       }
 
@@ -232,9 +180,8 @@ export async function GET(
         const headResponse = await s3Client.send(headCommand);
         contentType = headResponse.ContentType;
         kind = getEvidenceKindFromContentType(contentType);
-        console.log('📄 S3 metadata:', { key: object.Key, contentType, kind });
       } catch (headError) {
-        console.log('⚠️ Could not get metadata for:', object.Key, headError);
+        // Continue without metadata
       }
 
       // Fallback to extension-based detection if ContentType didn't work
@@ -243,11 +190,8 @@ export async function GET(
       }
 
       if (!kind) {
-        console.log('⏭️ Skipping non-media file:', object.Key, { contentType, hasExtension: object.Key.includes('.') });
         return null; // Skip non-audio/video files
       }
-
-      console.log('✅ Processing evidence file:', { key: object.Key, kind, size: object.Size, contentType });
 
       // Generate presigned URL
       const getObjectCommand = new GetObjectCommand({
@@ -282,13 +226,7 @@ export async function GET(
     const evidenceResults = await Promise.all(evidencePromises);
     const evidence = evidenceResults.filter((item): item is NonNullable<typeof item> => item !== null);
 
-    console.log('📊 Evidence processing complete:', {
-      totalObjects: allObjects.length,
-      evidenceFound: evidence.length,
-    });
-
     if (evidence.length === 0) {
-      console.log('⚠️ No audio/video evidence found after filtering');
       return NextResponse.json(
         {
           ok: false,
@@ -306,7 +244,7 @@ export async function GET(
       evidence,
     });
   } catch (error) {
-    console.error('❌ Failed to fetch evidence from S3:', {
+    console.error('Failed to fetch evidence from S3:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       incidentId,

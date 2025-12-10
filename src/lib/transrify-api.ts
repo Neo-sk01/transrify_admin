@@ -4,7 +4,7 @@ export class TransrifyApiError extends Error {
   constructor(
     message: string,
     public status?: number,
-    public response?: any
+    public response?: unknown
   ) {
     super(message);
     this.name = 'TransrifyApiError';
@@ -25,22 +25,10 @@ export class TransrifyApiClient {
     
     // Get auth token from parameter, env variable, or undefined
     this.authToken = authToken || process.env.ADMIN_SERVICE_TOKEN || process.env.ADMIN_ACCESS_TOKEN;
-    
-    console.log('🔧 TransrifyApiClient initialized:', {
-      baseUrl: this.baseUrl,
-      hasAuthToken: !!this.authToken
-    });
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
-    console.log('🌐 Making API request:', {
-      method: options.method || 'GET',
-      url: url,
-      baseUrl: this.baseUrl,
-      endpoint: endpoint
-    });
     
     try {
       // Build headers with auth token if available
@@ -59,16 +47,14 @@ export class TransrifyApiClient {
         headers,
       });
 
-      console.log('📡 API Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        url: response.url
-      });
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.log('❌ API Error response:', errorData);
+        console.error('API request failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          endpoint,
+          error: errorData
+        });
         
         throw new TransrifyApiError(
           `API request failed: ${response.status} ${response.statusText}`,
@@ -78,21 +64,8 @@ export class TransrifyApiClient {
       }
 
       const data = await response.json();
-      console.log('✅ API Success response:', {
-        dataKeys: Object.keys(data),
-        sessionsCount: data.sessions?.length,
-        incidentsCount: data.incidents?.length,
-        eventLogsCount: data.eventLogs?.length
-      });
-      
       return data;
     } catch (error) {
-      console.log('🚫 API Request error:', {
-        errorType: error instanceof Error ? error.constructor.name : typeof error,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        isTransrifyApiError: error instanceof TransrifyApiError
-      });
-      
       if (error instanceof TransrifyApiError) {
         throw error;
       }
