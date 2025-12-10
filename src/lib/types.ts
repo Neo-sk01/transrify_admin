@@ -64,3 +64,28 @@ export interface LedgerEntry {
   prevHash: string; // previous entry hash
   hash: string; // current entry hash
 }
+
+// Evidence Types
+export type EvidenceKind = 'AUDIO' | 'VIDEO';
+export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'FAILED' | 'ERROR';
+
+export interface Evidence {
+  id: string;
+  kind: EvidenceKind;
+  size: number;
+  sha256: string;
+  verificationStatus: VerificationStatus;
+  verificationError: string | null;
+  verifiedAt: string | null;
+  createdAt: string;
+  url: string;
+}
+
+export interface EvidenceResponse {
+  ok: boolean;
+  incidentId: string;
+  count: number;
+  evidence: Evidence[];
+  error?: string;
+  message?: string;
+}

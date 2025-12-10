@@ -1,5 +1,7 @@
 'use client';
 import { useState } from 'react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { OfflineBanner } from '@/components/OfflineBanner';
 
 export default function DemoPage() {
   const [tenantKey, setTenantKey] = useState('DEMO_BANK_KEY');
@@ -9,7 +11,7 @@ export default function DemoPage() {
   const [lat, setLat] = useState(37.7749);
   const [lng, setLng] = useState(-122.4194);
   const [sessionId, setSessionId] = useState('');
-  const [out, setOut] = useState<any>(null);
+  const [out, setOut] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function login() {
@@ -71,11 +73,14 @@ export default function DemoPage() {
   }
 
   return (
-    <main className="p-6 space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-3xl font-bold">Transrify Demo</h1>
-        <p className="text-gray-600 mt-2">Test the duress PIN authentication system</p>
-      </div>
+    <>
+      <OfflineBanner />
+      <ErrorBoundary>
+        <main className="p-6 space-y-6 max-w-2xl">
+          <div>
+            <h1 className="text-3xl font-bold">Transrify Demo</h1>
+            <p className="text-gray-600 mt-2">Test the duress PIN authentication system</p>
+          </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-4">
@@ -215,6 +220,8 @@ export default function DemoPage() {
           <li>Use <strong>Verify Session</strong> to check session status</li>
         </ol>
       </div>
-    </main>
+        </main>
+      </ErrorBoundary>
+    </>
   );
 }

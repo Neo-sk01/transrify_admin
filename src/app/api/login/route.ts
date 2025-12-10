@@ -18,25 +18,10 @@ const Body = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log('🔄 Demo login request received:', { customerRef: body.customerRef, pin: '***' });
-    
     const loginData = Body.parse(body);
-    
-    console.log('🌐 Calling Transrify API login with:', {
-      tenantKey: loginData.tenantKey,
-      customerRef: loginData.customerRef,
-      deviceInfo: loginData.deviceInfo,
-      geo: loginData.geo
-    });
 
     // Call the actual Transrify API
     const result = await transrifyApi.login(loginData);
-    
-    console.log('✅ Transrify API login response:', {
-      verdict: result.verdict,
-      recommendedAction: result.recommendedAction,
-      sessionId: result.sessionId
-    });
 
     return NextResponse.json({
       ok: true,
@@ -47,7 +32,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
-    console.error('❌ Demo login failed:', error);
+    console.error('Demo login failed:', error);
     
     if (error instanceof TransrifyApiError) {
       return NextResponse.json({
