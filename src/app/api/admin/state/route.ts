@@ -12,9 +12,16 @@ export async function GET(req: NextRequest) {
     // Fetch data from Transrify API
     const transrifyData = await transrifyApi.getAdminState();
     
-    // Keep local ledger for now (can be removed if not needed)
-    const ledger = readAll();
-    const last = ledger.slice(Math.max(0, ledger.length - 200));
+    // Ledger is optional and not supported on read-only filesystems (e.g., Vercel)
+    let last: unknown[] = [];
+    try {
+      const ledger = readAll();
+      last = ledger.slice(Math.max(0, ledger.length - 200));
+    } catch (ledgerError) {
+      console.warn('Skipping local ledger (read-only filesystem or missing storage).', {
+        error: ledgerError instanceof Error ? ledgerError.message : 'Unknown error',
+      });
+    }
 
     return NextResponse.json({ 
       ok: true, 

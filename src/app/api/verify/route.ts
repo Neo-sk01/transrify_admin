@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const { sessionId } = Q.parse({ sessionId: searchParams.get('sessionId') });
-
+    
     // Call the actual Transrify API
     const result = await transrifyApi.verifySession(sessionId);
 
