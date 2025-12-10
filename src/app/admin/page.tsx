@@ -82,7 +82,7 @@ export default function AdminPage() {
   }
 
   // Calculate badge counts
-  const openIncidentsCount = data.incidents.filter((i) => i.status === 'OPEN').length;
+  const openIncidentsCount = data.incidents.filter((i: { status: string }) => i.status === 'OPEN').length;
 
   const tabs: Tab[] = [
     { 

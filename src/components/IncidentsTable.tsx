@@ -9,7 +9,7 @@ export interface IncidentsTableProps {
   incidents: TransrifyIncident[];
 }
 
-export function IncidentsTable({ incidents }: IncidentsTableProps): JSX.Element {
+export function IncidentsTable({ incidents }: IncidentsTableProps): React.ReactElement {
   const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   // Sort incidents by creation timestamp descending (newest first)
   const sortedIncidents = [...incidents].sort((a, b) => {

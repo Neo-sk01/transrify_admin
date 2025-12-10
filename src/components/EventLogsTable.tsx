@@ -8,7 +8,7 @@ export interface EventLogsTableProps {
 
 const PAYLOAD_TRUNCATE_LENGTH = 100;
 
-function PayloadCell({ payload }: { payload: Record<string, unknown> }): JSX.Element {
+function PayloadCell({ payload }: { payload: Record<string, unknown> }): React.ReactElement {
   const [isExpanded, setIsExpanded] = useState(false);
   const payloadString = JSON.stringify(payload);
   const shouldTruncate = payloadString.length > PAYLOAD_TRUNCATE_LENGTH;
@@ -50,15 +50,16 @@ function PayloadCell({ payload }: { payload: Record<string, unknown> }): JSX.Ele
   );
 }
 
-export function EventLogsTable({ logs }: EventLogsTableProps): JSX.Element {
+export function EventLogsTable({ logs }: EventLogsTableProps): React.ReactElement {
   const columns: Column<TransrifyEventLog>[] = [
     {
       key: 'created_at',
       header: 'Time',
       width: '180px',
-      render: (value: string) => {
+      render: (value: unknown) => {
+        const dateString = value as string;
         // Display in user's local timezone
-        const date = new Date(value);
+        const date = new Date(dateString);
         return <span className="text-xs">{date.toLocaleString()}</span>;
       },
     },
@@ -66,20 +67,20 @@ export function EventLogsTable({ logs }: EventLogsTableProps): JSX.Element {
       key: 'event_type',
       header: 'Event Type',
       width: '150px',
-      render: (value: string) => <span className="text-xs">{value}</span>,
+      render: (value: unknown) => <span className="text-xs">{String(value)}</span>,
     },
     {
       key: 'tenant_id',
       header: 'Tenant',
       width: '150px',
-      render: (value: string) => (
-        <span className="font-mono text-xs">{value.slice(0, 8)}...</span>
+      render: (value: unknown) => (
+        <span className="font-mono text-xs">{String(value).slice(0, 8)}...</span>
       ),
     },
     {
       key: 'payload',
       header: 'Payload',
-      render: (value: Record<string, unknown>) => <PayloadCell payload={value} />,
+      render: (_value: unknown, row: TransrifyEventLog) => <PayloadCell payload={row.payload} />,
     },
   ];
 

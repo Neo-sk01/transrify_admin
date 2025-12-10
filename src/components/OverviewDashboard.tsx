@@ -60,7 +60,7 @@ export function getRecentIncidents(incidents: TransrifyIncident[], limit: number
     .slice(0, limit);
 }
 
-export function OverviewDashboard({ data }: OverviewDashboardProps): JSX.Element {
+export function OverviewDashboard({ data }: OverviewDashboardProps): React.ReactElement {
   const metrics = calculateMetrics(data);
   const recentSessions = data ? getRecentSessions(data.sessions, 5) : [];
   const recentIncidents = data ? getRecentIncidents(data.incidents, 5) : [];

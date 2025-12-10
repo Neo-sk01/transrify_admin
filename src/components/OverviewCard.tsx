@@ -16,7 +16,7 @@ export function OverviewCard({
   trend,
   trendValue,
   variant = 'default',
-}: OverviewCardProps): JSX.Element {
+}: OverviewCardProps): React.ReactElement {
   const variantStyles = {
     default: 'bg-white border-gray-200',
     success: 'bg-green-50 border-green-200',

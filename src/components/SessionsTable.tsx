@@ -1,25 +1,25 @@
 import React from 'react';
 import { DataTable, Column } from './DataTable';
-import StatusPill from './StatusPill';
+import StatusPill, { StatusPillProps } from './StatusPill';
 import type { TransrifySession } from '@/lib/types';
 
 export interface SessionsTableProps {
   sessions: TransrifySession[];
 }
 
-export function SessionsTable({ sessions }: SessionsTableProps): JSX.Element {
+export function SessionsTable({ sessions }: SessionsTableProps): React.ReactElement {
   const columns: Column<TransrifySession>[] = [
     {
       key: 'id',
       header: 'ID',
       width: '150px',
-      render: (value: string) => (
+      render: (value: unknown) => (
         <span 
           className="font-mono text-xs" 
-          title={value}
-          aria-label={`Session ID: ${value}`}
+          title={String(value)}
+          aria-label={`Session ID: ${String(value)}`}
         >
-          {value.slice(0, 8)}...
+          {String(value).slice(0, 8)}...
         </span>
       ),
     },
@@ -27,29 +27,32 @@ export function SessionsTable({ sessions }: SessionsTableProps): JSX.Element {
       key: 'customer_id',
       header: 'Customer',
       width: '150px',
-      render: (value: string) => (
-        <span className="text-xs">{value.slice(0, 8)}...</span>
+      render: (value: unknown) => (
+        <span className="text-xs">{String(value).slice(0, 8)}...</span>
       ),
     },
     {
       key: 'tenant_id',
       header: 'Tenant',
       width: '150px',
-      render: (value: string) => (
-        <span className="text-xs">{value.slice(0, 8)}...</span>
+      render: (value: unknown) => (
+        <span className="text-xs">{String(value).slice(0, 8)}...</span>
       ),
     },
     {
       key: 'result',
       header: 'Result',
       width: '120px',
-      render: (value: string) => <StatusPill value={value} />,
+      render: (value: unknown) => {
+        const status = String(value).toUpperCase() as StatusPillProps['value'];
+        return <StatusPill value={status} />;
+      },
     },
     {
       key: 'created_at',
       header: 'Created',
-      render: (value: string) => (
-        <span className="text-xs">{new Date(value).toLocaleString()}</span>
+      render: (value: unknown) => (
+        <span className="text-xs">{new Date(String(value)).toLocaleString()}</span>
       ),
     },
   ];

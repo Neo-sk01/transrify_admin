@@ -22,7 +22,7 @@ export function DataTable<T>({
   emptyMessage = 'No data available',
   maxHeight,
   onRowClick,
-}: DataTableProps<T>): JSX.Element {
+}: DataTableProps<T>): React.ReactElement {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollPositionRef = useRef<number>(0);
 
@@ -90,16 +90,20 @@ export function DataTable<T>({
               }}
             >
               {columns.map((column, colIndex) => {
-                const value = typeof column.key === 'string' && column.key.includes('.')
-                  ? column.key.split('.').reduce((obj: unknown, key) => (obj as Record<string, unknown>)?.[key], row)
-                  : (row as Record<string, unknown>)[column.key];
+                const value =
+                  typeof column.key === 'string' && column.key.includes('.')
+                    ? column.key
+                        .split('.')
+                        .reduce<unknown>((obj, key) => (obj as Record<string, unknown>)?.[key], row as unknown)
+                    : (row as Record<string, unknown>)[column.key as string];
+                const renderedValue = column.render ? column.render(value, row) : (value as React.ReactNode);
                 
                 return (
                   <td
                     key={colIndex}
                     className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                   >
-                    {column.render ? column.render(value, row) : value}
+                    {renderedValue}
                   </td>
                 );
               })}

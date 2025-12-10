@@ -10,12 +10,6 @@ import { S3Client, ListObjectsV2Command, GetObjectCommand, HeadObjectCommand } f
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { createHash } from 'crypto';
 
-// Get base URL from env, remove trailing /v1 if present (we'll add it per endpoint)
-const getTransrifyApiBase = () => {
-  const base = process.env.TRANSRIFY_API_BASE_URL || 'https://carboapi.me/v1';
-  return base.replace(/\/v1\/?$/, '');
-};
-const TRANSRIFY_API_BASE = getTransrifyApiBase();
 const S3_BUCKET = process.env.S3_BUCKET || '';
 const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY || '';
 const S3_SECRET_KEY = process.env.S3_SECRET_KEY || '';
@@ -180,7 +174,7 @@ export async function GET(
         const headResponse = await s3Client.send(headCommand);
         contentType = headResponse.ContentType;
         kind = getEvidenceKindFromContentType(contentType);
-      } catch (headError) {
+      } catch {
         // Continue without metadata
       }
 
